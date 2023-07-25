@@ -1,37 +1,68 @@
 package com.currency_tracker;
 
-// import org.jsoup.Jsoup;
-// import org.jsoup.nodes.Document;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
 
-// import lombok.SneakyThrows;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.DocumentBuilder;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+import org.w3c.dom.Node;
+import org.w3c.dom.Element;
 
 public class App {
     public static void main(String[] args) {
-        // String url = "https://www.cbr.ru/scripts/XML_daily.asp";
-        // Document page = Jsoup.connect(url).timeout(5000).get();
-        // var elements = page.select("html > body > div.pretty-print >
-        // div#folder0.folder > div.line > span.html-tag");
-        // System.out.println(elements);
-
         if (args.length > 0) {
-            if (args[0].equals("-h")) {
-                System.out.println(
-                        "Интерфейс: currency_rates --code=USD --date=2022-10-08\n\n" +
-                                "Описание параметров:\n" +
-                                "* code - код валюты в формате ISO 4217\n* date - дата в формате YYYY-MM-DD\n\n" +
-                                "Вывод: USD (Доллар США): 61,2475");
-            } else if (args[0].substring(0, 7).equals("--code=") && args[1].substring(0, 7).equals("--date=")
-                    && args[1].substring(7).matches("\\d{4}-\\d{2}-\\d{2}")) {
-                String url = "https://www.cbr.ru/scripts/XML_daily.asp";
-                String date = args[1].substring(7);
-                String curlCommand = "curl -o file " + url;
+            try {
+                File inputFile = new File("data.xml");
+                Document doc = initDoc(inputFile);
+                NodeList nList = doc.getElementsByTagName("Valute");
+                HashMap<String, Element> charCodeMap = convertNodeListToHashMap(nList);
+                printInfo(charCodeMap, args);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+
         } else {
-            System.err.println("Отсутствуют параметры запуска.");
-            System.out.println("Попробуйте запустить: currency_rates -h");
+            System.err.println("No currency code when starting a Java application!");
+        }
+    }
+
+    public static HashMap<String, Element> convertNodeListToHashMap(NodeList nList) {
+        HashMap<String, Element> map = new HashMap<>();
+
+        for (int i = 0; i < nList.getLength(); ++i) {
+            Node node = nList.item(i);
+            if (node.hasChildNodes() && node.getNodeType() == Node.ELEMENT_NODE) {
+                Element eElement = (Element) node;
+                String charCode = eElement.getElementsByTagName("CharCode").item(0).getTextContent();
+                map.put(charCode, eElement);
+            }
         }
 
-        // System.out.println("Argument count: " + args.length);
-        // System.out.println("Argument " + 0 + ": " + args[0]);
+        return map;
+    }
+
+    public static void printInfo(HashMap<String, Element> charCodeMap, String[] args) {
+        // Retrieve and print the currency code for the args[0] if it exists
+        Element targetElement = charCodeMap.get(args[0]);
+
+        if (targetElement != null) {
+            System.out.println(args[0] + " (" + targetElement.getElementsByTagName("Name").item(0).getTextContent()
+                    + "): " + targetElement.getElementsByTagName("Value").item(0).getTextContent());
+        } else {
+            System.err.println("Currency code for " + args[0] + " not found!");
+        }
+    }
+
+    public static Document initDoc(File inputFile) throws ParserConfigurationException, SAXException, IOException {
+        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+        Document doc = dBuilder.parse(inputFile);
+        doc.getDocumentElement().normalize();
+        return doc;
     }
 }
