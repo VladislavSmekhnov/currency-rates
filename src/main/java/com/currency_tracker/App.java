@@ -20,12 +20,15 @@ public class App {
                                 "Описание параметров:\n" +
                                 "* code - код валюты в формате ISO 4217\n* date - дата в формате YYYY-MM-DD\n\n" +
                                 "Вывод: USD (Доллар США): 61,2475");
-            } else if (args[0].substring(0, 7).equals("--code=")) {
-                System.out.println("Нужна конкретная валюта");
+            } else if (args[0].substring(0, 7).equals("--code=") && args[1].substring(0, 7).equals("--date=")
+                    && args[1].substring(7).matches("\\d{4}-\\d{2}-\\d{2}")) {
+                String url = "https://www.cbr.ru/scripts/XML_daily.asp";
+                String date = args[1].substring(7);
+                String curlCommand = "curl -o file " + url;
             }
         } else {
-            System.err.println("Отсутствуют параметры ззапуска.");
-            System.out.println("Попробуйте запустить currency_rates -h для вывода документации");
+            System.err.println("Отсутствуют параметры запуска.");
+            System.out.println("Попробуйте запустить: currency_rates -h");
         }
 
         // System.out.println("Argument count: " + args.length);
