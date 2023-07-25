@@ -15,7 +15,10 @@ output_data_file=data.xml
 # Call the function to check and delete the output data file
 check_file $output_data_file
 
-# Reformat the date from "YYYY-MM-DD" to "dd/mm/yyyy"
-date=$(date -d $date +"%d/%m/%Y")
+# Check if the date variable is not empty before reformatting it
+if [ -n "$date" ]; then
+  # Reformat the date from "YYYY-MM-DD" to "dd/mm/yyyy"
+  date=$(date -d "$date" +"%d/%m/%Y")
+fi
 
 curl -o $output_data_file https://www.cbr.ru/scripts/XML_daily.asp?date_req=$date &> app.log
